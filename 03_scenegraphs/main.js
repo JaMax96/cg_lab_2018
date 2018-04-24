@@ -7,7 +7,7 @@ var gl = null;
 //our shader program
 var shaderProgram = null;
 
-var canvasWidth = 1500;
+var canvasWidth = 800;
 var canvasHeight = 800;
 var aspectRatio = canvasWidth / canvasHeight;
 
@@ -18,19 +18,8 @@ var context;
 var animatedAngle = 0;
 var fieldOfViewInRadians = convertDegreeToRadians(30);
 
-
-
-
-var tankTransformationNodeA,cockpitTransformationNodeA,barrelTransformationNodeA;
-var tankTransformationNodeB,cockpitTransformationNodeB,barrelTransformationNodeB;
-
-var tankA_posX =0;
-var tankA_posY =0;
-var tankA_posZ =0;
-var tankB_posX =-1;
-var tankB_posY =0;
-var tankB_posZ =-1;
-
+var robotTransformationNode;
+var headTransformationNode;
 
 //links to buffer stored on the GPU
 var quadVertexBuffer, quadColorBuffer;
@@ -118,11 +107,23 @@ function init(resources) {
   quadTransformationMatrix = mat4.multiply(mat4.create(), quadTransformationMatrix, glm.translate(0.0,-0.5,0));
   quadTransformationMatrix = mat4.multiply(mat4.create(), quadTransformationMatrix, glm.scale(0.5,0.5,1));
 
+  //Task 3-2
+  var transformationNode = new TransformationSceneGraphNode(quadTransformationMatrix);
+  rootNode.append(transformationNode);
 
-  createTankA(rootNode);
-  createTankB(rootNode);
-  //createRobot(rootNode);
+  //TASK 5-3
+  var staticColorShaderNode = new ShaderSceneGraphNode(createProgram(gl, resources.staticcolorvs, resources.fs));
+  transformationNode.append(staticColorShaderNode);
 
+  //TASK 2-2
+  var quadNode = new QuadRenderNode();
+  staticColorShaderNode.append(quadNode);
+
+  createRobot(rootNode);
+
+  //TASK 4-2
+  //var cubeNode = new CubeRenderNode();
+  //rootNode.append(cubeNode);
 }
 
 function initQuadBuffer() {
@@ -154,105 +155,51 @@ function initCubeBuffer() {
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeIndices), gl.STATIC_DRAW);
 }
 
-function createTankA(rootNode){
-  //transformation on the whole tank
+function createRobot(rootNode) {
 
-  var tankTransformationMatrixA = mat4.multiply(mat4.create(), mat4.create(), glm.translate(tankA_posX,tankA_posY,tankA_posX));
-  tankTransformationMatrixA = mat4.multiply(mat4.create(), tankTransformationMatrixA, glm.rotateY(90));
+  //TASK 6-1
 
-  tankTransformationNodeA = new TransformationSceneGraphNode(tankTransformationMatrixA);
-  rootNode.append(tankTransformationNodeA);
+  //transformations of whole body
+  var robotTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(animatedAngle/2));
+  robotTransformationMatrix = mat4.multiply(mat4.create(), robotTransformationMatrix, glm.translate(0.3,0.9,0));
+  robotTransformationNode = new TransformationSceneGraphNode(robotTransformationMatrix);
+  rootNode.append(robotTransformationNode);
 
-
-
-  //transformations on the body only
-  var bodyTransformationMatrixA = mat4.multiply(mat4.create(),mat4.create(),glm.translate(0,0,0));
-  bodyTransformationMatrixA = mat4.multiply(mat4.create(), bodyTransformationMatrixA,glm.scale(1.7,0.5,1.1));
-  var bodyTransformationNodeA = new TransformationSGNode(bodyTransformationMatrixA);
-  tankTransformationNodeA.append(bodyTransformationNodeA);
-
-  //adding the body to the transformation node
+  //body
   cubeNode = new CubeRenderNode();
-  bodyTransformationNodeA.append(cubeNode);
+  robotTransformationNode.append(cubeNode);
 
+  //transformation of head
+  var headTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(animatedAngle));
+  headTransformationMatrix = mat4.multiply(mat4.create(), headTransformationMatrix, glm.translate(0.0,0.4,0));
+  headTransformationMatrix = mat4.multiply(mat4.create(), headTransformationMatrix, glm.scale(0.4,0.33,0.5));
+  headTransformationNode = new TransformationSceneGraphNode(headTransformationMatrix);
+  robotTransformationNode.append(headTransformationNode);
 
-
-
-
-  //transformations on the cockpit
-  var cockpitTransformationMatrixA = mat4.multiply(mat4.create(),mat4.create(),glm.rotateY(10));
-  cockpitTransformationMatrixA = mat4.multiply(mat4.create(),cockpitTransformationMatrixA,glm.translate(0.3,0.2,0));
-  cockpitTransformationMatrixA= mat4.multiply(mat4.create(), cockpitTransformationMatrixA,glm.scale(0.6,0.6,0.6));
-  var cockpitTransformationNodeA = new TransformationSGNode(cockpitTransformationMatrixA);
-  tankTransformationNodeA.append(cockpitTransformationNodeA);
-
-  //adding the cockpit to the transformation node
+  //head
   cubeNode = new CubeRenderNode();
-  cockpitTransformationNodeA.append(cubeNode);
+  headTransformationNode.append(cubeNode);
 
-  //transformations on the barrel
-  var barrelTransformationMatrixA = mat4.multiply(mat4.create(),mat4.create(),glm.rotateZ(0));
-   barrelTransformationMatrixA = mat4.multiply(mat4.create(),barrelTransformationMatrixA,glm.translate(-0.6,0.2,0));
-  barrelTransformationMatrixA = mat4.multiply(mat4.create(), barrelTransformationMatrixA,glm.scale(1.5,0.22,0.22));
-  var barrelTransformationNodeA = new TransformationSGNode(barrelTransformationMatrixA);
-  cockpitTransformationNodeA.append(barrelTransformationNodeA);
+  //transformation of left leg
+  var leftLegTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(0.16,-0.6,0));
+  leftLegTransformationMatrix = mat4.multiply(mat4.create(), leftLegTransformationMatrix, glm.scale(0.2,1,1));
+  var leftLegTransformationNode = new TransformationSceneGraphNode(leftLegTransformationMatrix);
+  robotTransformationNode.append(leftLegTransformationNode);
 
-  //adding the barrel to the transformation node
+  //left leg
   cubeNode = new CubeRenderNode();
-  barrelTransformationNodeA.append(cubeNode);
+  leftLegTransformationNode.append(cubeNode);
 
+  //transformation of right leg
+  var rightLegTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.translate(-0.16,-0.6,0));
+  rightLegTransformationMatrix = mat4.multiply(mat4.create(), rightLegTransformationMatrix, glm.scale(0.2,1,1));
+  var rightLegtTransformationNode = new TransformationSceneGraphNode(rightLegTransformationMatrix);
+  robotTransformationNode.append(rightLegtTransformationNode);
 
+  //right leg
+  cubeNode = new CubeRenderNode();
+  rightLegtTransformationNode.append(cubeNode);
 }
-
-function createTankB(rootNode){
-  //transformation on the whole tank
-
-  var tankTransformationMatrixB = mat4.multiply(mat4.create(), mat4.create(), glm.translate(tankB_posX,tankB_posY,tankB_posZ));
-  tankTransformationMatrixB = mat4.multiply(mat4.create(), tankTransformationMatrixB, glm.rotateY(90));
-
-  tankTransformationNodeB = new TransformationSceneGraphNode(tankTransformationMatrixB);
-  rootNode.append(tankTransformationNodeB);
-
-
-
-  //transformations on the body only
-  var bodyTransformationMatrixB = mat4.multiply(mat4.create(),mat4.create(),glm.translate(0,0,0));
-  bodyTransformationMatrixB = mat4.multiply(mat4.create(), bodyTransformationMatrixB,glm.scale(1.7,0.5,1.1));
-  var bodyTransformationNodeB = new TransformationSGNode(bodyTransformationMatrixB);
-  tankTransformationNodeB.append(bodyTransformationNodeB);
-
-  //adding the body to the transformation node
-  cubeNode = new CubeRenderNode();
-  bodyTransformationNodeB.append(cubeNode);
-
-
-
-  //transformations on the cockpit
-  var cockpitTransformationMatrixB = mat4.multiply(mat4.create(),mat4.create(),glm.rotateY(10));
-  cockpitTransformationMatrixB = mat4.multiply(mat4.create(),cockpitTransformationMatrixB,glm.translate(0.3,0.2,0));
-  cockpitTransformationMatrixB= mat4.multiply(mat4.create(), cockpitTransformationMatrixB,glm.scale(0.6,0.6,0.6));
-  cockpitTransformationNodeB = new TransformationSGNode(cockpitTransformationMatrixB);
-  tankTransformationNodeB.append(cockpitTransformationNodeB);
-
-  //adding the cockpit to the transformation node
-  cubeNode = new CubeRenderNode();
-  cockpitTransformationNodeB.append(cubeNode);
-
-  //transformations on the barrel
-  var barrelTransformationMatrixB = mat4.multiply(mat4.create(),mat4.create(),glm.rotateZ(-8));
-  barrelTransformationMatrixB = mat4.multiply(mat4.create(),barrelTransformationMatrixB,glm.translate(-0.6,0.2,0));
-  barrelTransformationMatrixB = mat4.multiply(mat4.create(), barrelTransformationMatrixB,glm.scale(1.5,0.22,0.22));
-  barrelTransformationNodeB = new TransformationSGNode(barrelTransformationMatrixB);
-  cockpitTransformationNodeB.append(barrelTransformationNodeB);
-
-  //adding the barrel to the transformation node
-  cubeNode = new CubeRenderNode();
-  barrelTransformationNodeB.append(cubeNode);
-
-
-}
-
-
 
 /**
  * render one frame
@@ -274,26 +221,16 @@ function render(timeInMilliseconds) {
   //activate this shader program
   gl.useProgram(shaderProgram);
 
+  //TASK 6-2
+  //update transformation of robot for rotation animation
+  var robotTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(animatedAngle/2));
+  robotTransformationMatrix = mat4.multiply(mat4.create(), robotTransformationMatrix, glm.translate(0.3,0.9,0));
+  robotTransformationNode.setMatrix(robotTransformationMatrix);
 
-
-  //movement of tank a
-  var robotTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(0));
-
-  if(timeInMilliseconds<4000){
-    robotTransformationMatrix = mat4.multiply(mat4.create(), robotTransformationMatrix, glm.translate(timeInMilliseconds/5000,0,0));
-  }else{
-    robotTransformationMatrix = mat4.multiply(mat4.create(), robotTransformationMatrix, glm.translate(4000/5000,0,0));
-  }
-    robotTransformationMatrix = mat4.multiply(mat4.create(), robotTransformationMatrix, glm.rotateY(180));
-
-
-  //robotTransformationNode.setMatrix(robotTransformationMatrix);
-  //tankTransformationNodeA.setMatrix(robotTransformationMatrix);
-/*
   var headTransformationMatrix = mat4.multiply(mat4.create(), mat4.create(), glm.rotateY(animatedAngle));
   headTransformationMatrix = mat4.multiply(mat4.create(), headTransformationMatrix, glm.translate(0.0,0.4,0));
   headTransformationMatrix = mat4.multiply(mat4.create(), headTransformationMatrix, glm.scale(0.4,0.33,0.5));
-  headTransformationNode.setMatrix(headTransformationMatrix);*/
+  headTransformationNode.setMatrix(headTransformationMatrix);
 
   context = createSceneGraphContext(gl, shaderProgram);
 
@@ -340,7 +277,7 @@ function createSceneGraphContext(gl, shader) {
 
 function calculateViewMatrix() {
   //compute the camera's matrix
-  var eye = [0,1.5,6];
+  var eye = [0,3,5];
   var center = [0,0,0];
   var up = [0,1,0];
   viewMatrix = mat4.lookAt(mat4.create(), eye, center, up);
@@ -449,7 +386,7 @@ class CubeRenderNode extends SceneGraphNode {
 
     //set alpha value for blending
     //TASK 1-3
-    gl.uniform1f(gl.getUniformLocation(context.shader, 'u_alpha'), 1);
+    gl.uniform1f(gl.getUniformLocation(context.shader, 'u_alpha'), 0.5);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIndexBuffer);
     gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0); //LINE_STRIP

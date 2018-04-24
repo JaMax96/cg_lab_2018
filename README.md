@@ -2,6 +2,10 @@
 
 This repository contains the labs for the course Computer Graphics at the Johannes Kepler University Linz, Austria.
 
+Slides and lab material can be found at:
+ www.cg.jku.at/teaching/computergraphics/lab
+
+
 
 # Staff
  * David Schedl (@schedldave)

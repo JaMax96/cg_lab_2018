@@ -17,13 +17,13 @@ uniform mat4 u_projection;
 //like a C program main is the main function
 void main() {
 
-  gl_Position = u_projection * u_modelView
-    * vec4(a_position, 1);
+//  gl_Position = u_projection * u_modelView
+//    * vec4(a_position, 1);
 
   //TASK 5-2
   //we don't use a_color anymore
   a_color;
 
   //setting a static color (yellow) to the output varying color
-  v_color = vec3(1,1,0);
+//v_color = vec3(1,1,1);
 }
